@@ -2,12 +2,7 @@ import {
   Home,
   Edit3,
   ChevronDown,
-  Folder,
-  File,
-  Plus,
-  User2,
   ChevronUp,
-  Menu,
   MenuSquare
 } from "lucide-react"
 
@@ -26,9 +21,13 @@ import {
 import { Link } from "react-router"
 import { Collapsible } from "./ui/collapsible"
 import { CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsible"
-import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import CreateFileDialog from "./create-file-dialog"
+import { getAllFile } from "~/lib/create-file"
+import { useEffect, useRef } from "react"
+import CreateFolderDialog from "./create-folder-dialog"
+import { useFileContext } from "~/lib/context/files-context"
 
 const items = [
   {
@@ -43,18 +42,30 @@ const items = [
   },
 ]
 
-const projects = [
-  {
-    title: 'Project 1',
-    url: '/project-1'
-  },
-  {
-    title: 'Project 2',
-    url: '/project-1'
-  },
-]
-
 export function AppSidebar() {
+  const fileContext = useFileContext()
+  const hasFetched = useRef(false)
+
+  useEffect(() => {
+    if (!hasFetched.current) {
+      async function getAllFiles() {
+        const files = await getAllFile()
+        const allFiles = Object.keys(files).map(key => {
+          return {
+            name: files[key].name,
+            relativePath: files[key].relativePath,
+            size: files[key].size,
+            type: files[key].kind,
+          }
+        })
+
+        fileContext.setFiles(allFiles);
+      }
+      getAllFiles()
+      hasFetched.current = true
+    }
+  }, [])
+
   return (
     <Sidebar>
       <SidebarHeader />
@@ -73,22 +84,14 @@ export function AppSidebar() {
                   <SidebarMenuItem className="flex gap-2">
                     <Input placeholder="Filename" />
                     <div className="flex gap-2">
-                      <Button variant='outline'>
-                        <File />
-                      </Button>
-                      <Button variant='outline'>
-                        <Folder />
-                      </Button>
+                      <CreateFileDialog />
+                      <CreateFolderDialog />
                     </div>
                   </SidebarMenuItem>
-                  {projects.map(item => (
-                    <SidebarMenuItem key={item.title}>
+                  {fileContext.files.map((item, index) => (
+                    <SidebarMenuItem key={index}>
                       <SidebarMenuButton asChild>
-                        <Link to={{
-                          pathname: item.url
-                        }}>
-                          <span>{item.title}</span>
-                        </Link>
+                        <span>{item.name}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -110,7 +113,6 @@ export function AppSidebar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="top"
-                className="w-[--radix-popper-anchor-width]"
               >
                 {items.map(item => (
                   <DropdownMenuItem asChild>
