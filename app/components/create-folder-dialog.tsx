@@ -13,9 +13,9 @@ import { z } from 'zod'
 import { useForm } from "react-hook-form"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { createFile, createFolder, getAllFile } from "~/lib/create-file"
 import { useFileContext } from "~/lib/context/files-context"
 import { useState, type Dispatch, type SetStateAction } from "react"
+import { createFolder, getAllFiles } from "~/lib/opfs"
 
 const formSchema = z.object({
   foldername: z
@@ -38,23 +38,11 @@ export function CreateFolderForm({ setOpen }: { setOpen: Dispatch<SetStateAction
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsCreating((prev) => prev = true)
+
     await createFolder(values.foldername, 'notes')
-    const allFiles = await getAllFile()
+    const allFiles = await getAllFiles()
+    fileContext.setFiles(allFiles);
 
-    const files = Object.keys(allFiles).map(key => {
-      return {
-        name: allFiles[key].name,
-        relativePath: allFiles[key].relativePath,
-        size: allFiles[key].size,
-        kind: allFiles[key].kind,
-        type: allFiles[key].type,
-        handle: allFiles[key].handle,
-        lastModified: allFiles[key].lastModified,
-      }
-    }).sort((a, b) => a.lastModified - b.lastModified)
-      .sort((a, b) => a.kind.localeCompare(b.kind))
-
-    fileContext.setFiles(files);
     setOpen(false)
     setIsCreating((prev) => prev = false)
   }

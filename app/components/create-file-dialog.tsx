@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { useForm } from "react-hook-form"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { createFile, getAllFile } from "~/lib/create-file"
+import { createFile, getAllFiles } from "~/lib/opfs"
 import { useFileContext } from "~/lib/context/files-context"
 import { useState, type Dispatch, type SetStateAction } from "react"
 
@@ -34,19 +34,11 @@ export function CreateFileForm({ setOpen }: { setOpen: Dispatch<SetStateAction<b
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsCreating((prev) => prev = true)
+
     await createFile(values.filename, null)
-    const allFiles = await getAllFile()
+    const allFiles = await getAllFiles()
+    fileContext.setFiles(allFiles);
 
-    const files = Object.keys(allFiles).map(key => {
-      return {
-        name: allFiles[key].name,
-        relativePath: allFiles[key].relativePath,
-        size: allFiles[key].size,
-        type: allFiles[key].kind,
-      }
-    })
-
-    fileContext.setFiles(files);
     setOpen(false)
     setIsCreating((prev) => prev = false)
   }
