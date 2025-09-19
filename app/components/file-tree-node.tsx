@@ -35,7 +35,6 @@ type FileTreeNodeProps = {
   node: TreeNode;
 };
 
-// This is our recursive component
 export function FileTreeNode({ node }: FileTreeNodeProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isDirectory = node.kind === 'directory';
