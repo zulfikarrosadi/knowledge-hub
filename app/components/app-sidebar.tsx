@@ -3,7 +3,7 @@ import {
   Edit3,
   ChevronDown,
   ChevronUp,
-  MenuSquare
+  MenuSquare,
 } from "lucide-react"
 
 import {
@@ -24,10 +24,11 @@ import { CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsi
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import CreateFileDialog from "./create-file-dialog"
-import { getAllFile } from "~/lib/create-file"
-import { useEffect, useRef } from "react"
+import { getAllFiles } from "~/lib/opfs"
+import { useEffect, useMemo, useRef, useState } from "react"
 import CreateFolderDialog from "./create-folder-dialog"
 import { useFileContext } from "~/lib/context/files-context"
+import { FileTreeNode, type TreeNode } from "~/components/file-tree-node"
 
 const items = [
   {
@@ -42,58 +43,103 @@ const items = [
   },
 ]
 
+
+// --- Helper function to build the tree ---
+function buildFileTree(files: ReturnType<typeof useFileContext>['files']): TreeNode[] {
+  const tree: TreeNode[] = [];
+  const nodeMap = new Map<string, TreeNode>();
+
+  // Sort files by path depth to ensure parents are created before children
+  const sortedFiles = [...files].sort((a, b) => a.relativePath.localeCompare(b.relativePath)).sort((a, b) => a.kind.localeCompare(b.kind));
+
+  // First pass: create all nodes and map them by their path
+  sortedFiles.forEach(file => {
+    const newNode: TreeNode = {
+      ...file,
+      children: [],
+    };
+    nodeMap.set(file.relativePath, newNode);
+  });
+
+  // Second pass: link nodes to their parents
+  nodeMap.forEach(node => {
+    const parentPath = node.relativePath.substring(0, node.relativePath.lastIndexOf('/'));
+    if (parentPath && nodeMap.has(parentPath)) {
+      const parent = nodeMap.get(parentPath);
+      parent?.children.push(node);
+    } else {
+      // No parent found, so it's a root node
+      tree.push(node);
+    }
+  });
+
+  return tree;
+}
+
 export function AppSidebar() {
   const fileContext = useFileContext()
   const hasFetched = useRef(false)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(true)
 
   useEffect(() => {
     if (!hasFetched.current) {
-      async function getAllFiles() {
-        const files = await getAllFile()
-        const allFiles = Object.keys(files).map(key => {
-          return {
-            name: files[key].name,
-            relativePath: files[key].relativePath,
-            size: files[key].size,
-            type: files[key].kind,
-          }
-        })
-
-        fileContext.setFiles(allFiles);
+      async function initializeFileSystem() {
+        const files = await getAllFiles()
+        fileContext.setFiles(files);
       }
-      getAllFiles()
+      initializeFileSystem()
       hasFetched.current = true
     }
   }, [])
+
+  useEffect(() => {
+    console.log(fileContext.files)
+  }, [fileContext.files])
+
+  const fileTree = useMemo(() => {
+    const filtered = fileContext.files.filter(file =>
+      file.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // If searching, we show a flat list. Otherwise, show the tree.
+    if (searchTerm) {
+      return buildFileTree(filtered);
+    }
+
+    return buildFileTree(fileContext.files);
+  }, [fileContext.files, searchTerm]);
 
   return (
     <Sidebar>
       <SidebarHeader />
       <SidebarContent>
-        <Collapsible>
+        <Collapsible open={isOpen} defaultOpen={true} onOpenChange={setIsOpen}>
           <SidebarGroup>
             <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Project
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              <CollapsibleTrigger asChild className="w-full">
+                <div className="w-full flex justify-between items-center gap-2">
+                  <span>Project</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </div>
               </CollapsibleTrigger>
             </SidebarGroupLabel>
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem className="flex gap-2">
-                    <Input placeholder="Filename" />
-                    <div className="flex gap-2">
-                      <CreateFileDialog />
-                      <CreateFolderDialog />
-                    </div>
+                  <SidebarMenuItem className="flex gap-2 p-2">
+                    <Input
+                      placeholder="Search files..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <CreateFileDialog />
+                    <CreateFolderDialog />
                   </SidebarMenuItem>
-                  {fileContext.files.map((item, index) => (
-                    <SidebarMenuItem key={index}>
-                      <SidebarMenuButton asChild>
-                        <span>{item.name}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                  {fileTree.map((node) => (
+                    <FileTreeNode key={node.relativePath} node={node} />
                   ))}
                 </SidebarMenu>
               </SidebarGroupContent>
