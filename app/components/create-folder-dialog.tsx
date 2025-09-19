@@ -1,4 +1,4 @@
-import { File } from "lucide-react"
+import { Folder } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -13,29 +13,33 @@ import { z } from 'zod'
 import { useForm } from "react-hook-form"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { createFile, getAllFiles } from "~/lib/opfs"
 import { useFileContext } from "~/lib/context/files-context"
 import { useState, type Dispatch, type SetStateAction } from "react"
+import { createFolder, getAllFiles } from "~/lib/opfs"
 
 const formSchema = z.object({
-  filename: z.string({ error: 'filename must be a valid string' }).min(1, 'filename is required').max(50, 'filename should be less than 50 characters')
+  foldername: z
+    .string({ error: 'folder name must be a valid string' })
+    .min(1, 'folder name is required')
+    .max(50, 'folder name should be less than 50 characters'),
 })
 
-export function CreateFileForm({ setOpen }: { setOpen: Dispatch<SetStateAction<boolean>> }) {
+export function CreateFolderForm({ setOpen }: { setOpen: Dispatch<SetStateAction<boolean>> }) {
   const fileContext = useFileContext()
   const [isCreating, setIsCreating] = useState(false)
+
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      filename: ''
+      foldername: ''
     }
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsCreating((prev) => prev = true)
 
-    await createFile(values.filename, null)
+    await createFolder(values.foldername, 'notes')
     const allFiles = await getAllFiles()
     fileContext.setFiles(allFiles);
 
@@ -48,19 +52,19 @@ export function CreateFileForm({ setOpen }: { setOpen: Dispatch<SetStateAction<b
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="filename"
+          name="foldername"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Filename</FormLabel>
+              <FormLabel>Folder Name</FormLabel>
               <FormControl>
-                <Input placeholder="My amazing note" {...field} />
+                <Input placeholder="My folder" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" disabled={isCreating}>
-          Create File
+          Create Folder
         </Button>
       </form>
     </Form>
@@ -72,21 +76,22 @@ export default function() {
   const handleOpenChange = (newOpenState: boolean) => {
     setOpen(newOpenState);
   };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant='outline'>
-          <File />
+          <Folder />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Craete File</DialogTitle>
+          <DialogTitle>Craete Folder</DialogTitle>
           <DialogDescription>
-            Filename must be unique
+            Create folder to organize your notes
           </DialogDescription>
         </DialogHeader>
-        <CreateFileForm setOpen={setOpen} />
+        <CreateFolderForm setOpen={setOpen} />
       </DialogContent>
     </Dialog>
   )
