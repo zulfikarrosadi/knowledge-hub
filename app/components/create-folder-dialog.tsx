@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { useFileContext } from "~/lib/context/files-context"
-import { useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 import { createFolder, getAllFiles } from "~/lib/opfs"
 
 const formSchema = z.object({
@@ -22,9 +22,10 @@ const formSchema = z.object({
     .string({ error: 'folder name must be a valid string' })
     .min(1, 'folder name is required')
     .max(50, 'folder name should be less than 50 characters'),
+  parentFolder: z.string().optional(),
 })
 
-export function CreateFolderForm({ setOpen }: { setOpen: Dispatch<SetStateAction<boolean>> }) {
+export function CreateFolderForm({ setOpen, relativePath = '' }: { setOpen: Dispatch<SetStateAction<boolean>>, relativePath: string }) {
   const fileContext = useFileContext()
   const [isCreating, setIsCreating] = useState(false)
 
@@ -32,14 +33,15 @@ export function CreateFolderForm({ setOpen }: { setOpen: Dispatch<SetStateAction
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      foldername: ''
+      foldername: '',
+      parentFolder: relativePath,
     }
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsCreating((prev) => prev = true)
 
-    await createFolder(values.foldername, 'notes')
+    await createFolder(values.foldername, relativePath)
     const allFiles = await getAllFiles()
     fileContext.setFiles(allFiles);
 
@@ -63,6 +65,18 @@ export function CreateFolderForm({ setOpen }: { setOpen: Dispatch<SetStateAction
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="parentFolder"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input hidden={true} {...field} value={relativePath} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <Button type="submit" disabled={isCreating}>
           Create Folder
         </Button>
@@ -71,19 +85,22 @@ export function CreateFolderForm({ setOpen }: { setOpen: Dispatch<SetStateAction
   )
 }
 
-export default function() {
-  const [open, setOpen] = useState(false)
+export default function(
+  { relativePath = '', open, setOpen }: { relativePath: string, open: boolean, setOpen: Dispatch<SetStateAction<boolean>> }
+) {
   const handleOpenChange = (newOpenState: boolean) => {
     setOpen(newOpenState);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant='outline'>
-          <Folder />
-        </Button>
-      </DialogTrigger>
+      {!relativePath && (
+        <DialogTrigger asChild>
+          <Button variant='outline'>
+            <Folder />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Craete Folder</DialogTitle>
@@ -91,7 +108,7 @@ export default function() {
             Create folder to organize your notes
           </DialogDescription>
         </DialogHeader>
-        <CreateFolderForm setOpen={setOpen} />
+        <CreateFolderForm setOpen={setOpen} relativePath={relativePath} />
       </DialogContent>
     </Dialog>
   )

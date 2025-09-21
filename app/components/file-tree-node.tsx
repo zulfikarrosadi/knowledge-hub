@@ -19,8 +19,10 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
 } from "./ui/sidebar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import CreateFileDialog from "./create-file-dialog";
+import CreateFolderDialog from './create-folder-dialog'
 
 // Define the shape of a single node in our file tree
 export type TreeNode = {
@@ -89,34 +91,54 @@ export function FileTreeNode({ node }: FileTreeNodeProps) {
 // A helper component for the dropdown actions
 function FileActions({ item }: { item: TreeNode }) {
   // TODO: Wire up these functions to the OPFS actions
-  const handleAddFile = () => console.log(`Add file to ${item.relativePath}`);
   const handleRename = () => console.log(`Rename ${item.relativePath}`);
   const handleDelete = () => console.log(`Delete ${item.relativePath}`);
 
+  const [createFileOpen, setCreateFileOpen] = useState(false)
+  const [createFolderOpen, setCreateFolderOpen] = useState(false)
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuAction>
-          <MoreHorizontal className="h-4 w-4" />
-        </SidebarMenuAction>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="right" align="start">
-        {item.kind === 'directory' && (
-          <DropdownMenuItem onClick={handleAddFile}>
-            <Plus className="mr-2 h-4 w-4" />
-            <span>Add File</span>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <SidebarMenuAction>
+            <MoreHorizontal className="h-4 w-4" />
+          </SidebarMenuAction>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start">
+          {item.kind === 'directory' && (
+            <>
+              <DropdownMenuItem onSelect={() => setCreateFileOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                <span>Add File</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setCreateFolderOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                <span>Add Folder</span>
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuItem onClick={handleRename}>
+            <Edit3 className="mr-2 h-4 w-4" />
+            <span>Rename</span>
           </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={handleRename}>
-          <Edit3 className="mr-2 h-4 w-4" />
-          <span>Rename</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleDelete} className="text-red-500">
-          <Trash className="mr-2 h-4 w-4" />
-          <span>Delete</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem onClick={handleDelete} className="text-red-500">
+            <Trash className="mr-2 h-4 w-4" />
+            <span>Delete</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <CreateFileDialog
+        parentFolder={item.relativePath}
+        open={createFileOpen}
+        setOpen={setCreateFileOpen}
+      />
+      <CreateFolderDialog
+        relativePath={item.relativePath}
+        open={createFolderOpen}
+        setOpen={setCreateFolderOpen}
+      />
+    </>
   );
 }
 

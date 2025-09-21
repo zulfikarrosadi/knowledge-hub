@@ -80,7 +80,9 @@ export function AppSidebar() {
   const fileContext = useFileContext()
   const hasFetched = useRef(false)
   const [searchTerm, setSearchTerm] = useState("");
-  const [isOpen, setIsOpen] = useState(true)
+  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true)
+  const [isCreateFileOpen, setIsCreateFileOpen] = useState(true)
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(true)
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -114,14 +116,14 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader />
       <SidebarContent>
-        <Collapsible open={isOpen} defaultOpen={true} onOpenChange={setIsOpen}>
+        <Collapsible open={isCollapsibleOpen} defaultOpen={true} onOpenChange={setIsCollapsibleOpen}>
           <SidebarGroup>
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger asChild className="w-full">
                 <div className="w-full flex justify-between items-center gap-2">
                   <span>Project</span>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 shrink-0 transition-transform ${isCollapsibleOpen ? 'rotate-180' : ''}`}
                   />
                 </div>
               </CollapsibleTrigger>
@@ -135,8 +137,16 @@ export function AppSidebar() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <CreateFileDialog />
-                    <CreateFolderDialog />
+                    <CreateFileDialog
+                      parentFolder=""
+                      open={isCreateFileOpen}
+                      setOpen={setIsCreateFileOpen}
+                    />
+                    <CreateFolderDialog
+                      relativePath=""
+                      open={isCreateFolderOpen}
+                      setOpen={setIsCreateFolderOpen}
+                    />
                   </SidebarMenuItem>
                   {fileTree.map((node) => (
                     <FileTreeNode key={node.relativePath} node={node} />
