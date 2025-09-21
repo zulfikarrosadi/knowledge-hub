@@ -1,31 +1,49 @@
-export async function createFile(filename: string, foldername: string | null = null) {
-  const opsfRoot = await navigator.storage.getDirectory()
+export async function getNestedDirectoryHandle(rootHandle: FileSystemDirectoryHandle, path: string) {
+  const targetHandle = path.split('/').filter((item) => item.length > 0)
+  let currentHandle = rootHandle
 
-  if (foldername) {
-    const folder = await opsfRoot.getDirectoryHandle(foldername, { create: true })
-    const filehandle = await folder.getFileHandle(filename, { create: true })
-    return filehandle
+  for (const target of targetHandle) {
+    currentHandle = await currentHandle.getDirectoryHandle(target, { create: true })
   }
 
-  const notes = await opsfRoot.getDirectoryHandle('notes', { create: true })
-  const filehandle = await notes.getFileHandle(filename, { create: true })
-
-  return filehandle
+  return currentHandle
 }
 
-export async function createFolder(foldername: string, parentfolder: string | null = null) {
+/**
+ * @param {string} relativePath add this parameter if we create nested folder
+ */
+export async function createFile(filename: string, relativePath: string | null = null) {
   const root = await navigator.storage.getDirectory()
-  if (parentfolder) {
-    const parent = await root.getDirectoryHandle(parentfolder)
-    const newFolder = await parent.getDirectoryHandle(foldername, { create: true })
+  const notesHandle = await root.getDirectoryHandle('notes', { create: true })
 
-    return newFolder
+  if (relativePath) {
+    const currentHandle = await getNestedDirectoryHandle(notesHandle, relativePath)
+    const newFileHandle = await currentHandle.getFileHandle(filename, { create: true })
+    return newFileHandle
   }
-  const folderHandle = await root.getDirectoryHandle(foldername, { create: true })
 
-  return folderHandle
+  const newFileHandle = await notesHandle.getFileHandle(filename, { create: true })
+
+  return newFileHandle
 }
 
+
+/**
+ * @param {string} relativePath add this parameter if we create nested folder
+ */
+export async function createFolder(foldername: string, relativePath: string = '') {
+  const root = await navigator.storage.getDirectory()
+  const notesHandle = await root.getDirectoryHandle('notes')
+
+  if (relativePath) {
+    const currentHandle = await getNestedDirectoryHandle(notesHandle, relativePath)
+    const newDirHandle = await currentHandle.getDirectoryHandle(foldername, { create: true })
+    return newDirHandle
+  }
+
+  const newDirHandle = await notesHandle.getDirectoryHandle(foldername, { create: true })
+  return newDirHandle
+}
 
 export type FileSystemItem = {
   handle: FileSystemHandle;
