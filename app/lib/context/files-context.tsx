@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type Dispatch, type JSX, type Reac
 type File = {
   name: string;
   handle: FileSystemFileHandle;
-  kind: string;
+  kind: 'file' | 'directory';
   lastModified: number;
   relativePath: string;
   size: number;
