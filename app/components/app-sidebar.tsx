@@ -33,12 +33,12 @@ import { FileTreeNode, type TreeNode } from "~/components/file-tree-node"
 const items = [
   {
     title: "Home",
-    url: "/home",
+    url: "/",
     icon: Home,
   },
   {
     title: "Editor",
-    url: "/",
+    url: "/editor",
     icon: Edit3,
   },
 ]
@@ -171,7 +171,7 @@ export function AppSidebar() {
                 side="top"
               >
                 {items.map(item => (
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem asChild key={item.url}>
                     <Link to={{ pathname: item.url }}>
                       <item.icon />
                       <span>{item.title}</span>
