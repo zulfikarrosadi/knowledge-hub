@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { createFile, getAllFiles } from "~/lib/opfs"
-import { useFileContext } from "~/lib/context/files-context"
+import { useFilesContext } from "~/lib/context/files-context"
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 
 const formSchema = z.object({
@@ -28,7 +28,7 @@ const formSchema = z.object({
 })
 
 export function CreateFileForm({ setOpen, parentFolder = '' }: { setOpen: Dispatch<SetStateAction<boolean>>, parentFolder: string }) {
-  const fileContext = useFileContext()
+  const fileContext = useFilesContext()
   const [isCreating, setIsCreating] = useState(false)
 
   const form = useForm({
