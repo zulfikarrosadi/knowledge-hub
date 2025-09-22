@@ -8,6 +8,6 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
-export default function Editor() {
-  return <App />;
+export default function Editor({ params }: Route.ComponentProps) {
+  return <App params={params} />;
 }

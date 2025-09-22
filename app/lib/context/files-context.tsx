@@ -1,31 +1,44 @@
 import { createContext, useContext, useState, type Dispatch, type JSX, type ReactNode, type SetStateAction } from "react";
 
-type File = {
+export type FileEntry = {
   name: string;
   handle: FileSystemFileHandle;
-  kind: string;
+  kind: 'file';
+  lastModified: number;
+  relativePath: string;
+  size: number;
+  type: string;
+}
+type DirectoryEntry = {
+  name: string;
+  handle: FileSystemDirectoryHandle;
+  kind: 'directory';
   lastModified: number;
   relativePath: string;
   size: number;
   type: string;
 }
 
+type File = FileEntry | DirectoryEntry
 
-export const FileContext = createContext<{
+export const FilesContext = createContext<{
   files: File[],
-  setFiles: Dispatch<SetStateAction<File[]>>
-}>({ files: [], setFiles: () => { } })
+  setFiles: Dispatch<SetStateAction<File[]>>,
+}>({
+  files: [],
+  setFiles: () => { },
+})
 
-export function FileProvider({ children }: { children: JSX.Element | ReactNode }) {
+export function FilesProvider({ children }: { children: JSX.Element | ReactNode }) {
   const [files, setFiles] = useState<File[]>([])
 
   return (
-    <FileContext value={{ files, setFiles }}>
+    <FilesContext value={{ files, setFiles }}>
       {children}
-    </FileContext>
+    </FilesContext>
   )
 }
 
-export function useFileContext() {
-  return useContext(FileContext)
+export function useFilesContext() {
+  return useContext(FilesContext)
 }

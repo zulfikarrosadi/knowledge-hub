@@ -27,7 +27,7 @@ import CreateFileDialog from "./create-file-dialog"
 import { getAllFiles } from "~/lib/opfs"
 import { useEffect, useMemo, useRef, useState } from "react"
 import CreateFolderDialog from "./create-folder-dialog"
-import { useFileContext } from "~/lib/context/files-context"
+import { useFilesContext } from "~/lib/context/files-context"
 import { FileTreeNode, type TreeNode } from "~/components/file-tree-node"
 
 const items = [
@@ -45,7 +45,7 @@ const items = [
 
 
 // --- Helper function to build the tree ---
-function buildFileTree(files: ReturnType<typeof useFileContext>['files']): TreeNode[] {
+function buildFileTree(files: ReturnType<typeof useFilesContext>['files']): TreeNode[] {
   const tree: TreeNode[] = [];
   const nodeMap = new Map<string, TreeNode>();
 
@@ -77,16 +77,18 @@ function buildFileTree(files: ReturnType<typeof useFileContext>['files']): TreeN
 }
 
 export function AppSidebar() {
-  const fileContext = useFileContext()
+  const filesContext = useFilesContext()
   const hasFetched = useRef(false)
   const [searchTerm, setSearchTerm] = useState("");
-  const [isOpen, setIsOpen] = useState(true)
+  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true)
+  const [isCreateFileOpen, setIsCreateFileOpen] = useState(true)
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(true)
 
   useEffect(() => {
     if (!hasFetched.current) {
       async function initializeFileSystem() {
         const files = await getAllFiles()
-        fileContext.setFiles(files);
+        filesContext.setFiles(files);
       }
       initializeFileSystem()
       hasFetched.current = true
@@ -94,11 +96,11 @@ export function AppSidebar() {
   }, [])
 
   useEffect(() => {
-    console.log(fileContext.files)
-  }, [fileContext.files])
+    console.log(filesContext.files)
+  }, [filesContext.files])
 
   const fileTree = useMemo(() => {
-    const filtered = fileContext.files.filter(file =>
+    const filtered = filesContext.files.filter(file =>
       file.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -107,21 +109,21 @@ export function AppSidebar() {
       return buildFileTree(filtered);
     }
 
-    return buildFileTree(fileContext.files);
-  }, [fileContext.files, searchTerm]);
+    return buildFileTree(filesContext.files);
+  }, [filesContext.files, searchTerm]);
 
   return (
     <Sidebar>
       <SidebarHeader />
       <SidebarContent>
-        <Collapsible open={isOpen} defaultOpen={true} onOpenChange={setIsOpen}>
+        <Collapsible open={isCollapsibleOpen} defaultOpen={true} onOpenChange={setIsCollapsibleOpen}>
           <SidebarGroup>
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger asChild className="w-full">
                 <div className="w-full flex justify-between items-center gap-2">
                   <span>Project</span>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 shrink-0 transition-transform ${isCollapsibleOpen ? 'rotate-180' : ''}`}
                   />
                 </div>
               </CollapsibleTrigger>
@@ -135,8 +137,16 @@ export function AppSidebar() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <CreateFileDialog />
-                    <CreateFolderDialog />
+                    <CreateFileDialog
+                      parentFolder=""
+                      open={isCreateFileOpen}
+                      setOpen={setIsCreateFileOpen}
+                    />
+                    <CreateFolderDialog
+                      relativePath=""
+                      open={isCreateFolderOpen}
+                      setOpen={setIsCreateFolderOpen}
+                    />
                   </SidebarMenuItem>
                   {fileTree.map((node) => (
                     <FileTreeNode key={node.relativePath} node={node} />

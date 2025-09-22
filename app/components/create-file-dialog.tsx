@@ -14,28 +14,40 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { createFile, getAllFiles } from "~/lib/opfs"
-import { useFileContext } from "~/lib/context/files-context"
-import { useState, type Dispatch, type SetStateAction } from "react"
+import { useFilesContext } from "~/lib/context/files-context"
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 
 const formSchema = z.object({
-  filename: z.string({ error: 'filename must be a valid string' }).min(1, 'filename is required').max(50, 'filename should be less than 50 characters')
+  filename: z
+    .string({ error: 'filename must be a valid string' })
+    .min(1, 'filename is required')
+    .max(50, 'filename should be less than 50 characters'),
+  parentFolder: z
+    .string()
+    .optional()
 })
 
-export function CreateFileForm({ setOpen }: { setOpen: Dispatch<SetStateAction<boolean>> }) {
-  const fileContext = useFileContext()
+export function CreateFileForm({ setOpen, parentFolder = '' }: { setOpen: Dispatch<SetStateAction<boolean>>, parentFolder: string }) {
+  const fileContext = useFilesContext()
   const [isCreating, setIsCreating] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      filename: ''
+      filename: '',
+      parentFolder: parentFolder
     }
   })
 
+  useEffect(() => {
+    console.log(parentFolder)
+  }, [parentFolder])
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsCreating((prev) => prev = true)
+    console.log('onsubmit: ', values)
 
-    await createFile(values.filename, null)
+    await createFile(values.filename, values.parentFolder)
     const allFiles = await getAllFiles()
     fileContext.setFiles(allFiles);
 
@@ -59,6 +71,19 @@ export function CreateFileForm({ setOpen }: { setOpen: Dispatch<SetStateAction<b
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="parentFolder"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input hidden={true} {...field} value={parentFolder} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button type="submit" disabled={isCreating}>
           Create File
         </Button>
@@ -67,18 +92,20 @@ export function CreateFileForm({ setOpen }: { setOpen: Dispatch<SetStateAction<b
   )
 }
 
-export default function() {
-  const [open, setOpen] = useState(false)
+export default function({ parentFolder = '', open, setOpen }: { parentFolder: string, open: boolean, setOpen: Dispatch<SetStateAction<boolean>> }) {
   const handleOpenChange = (newOpenState: boolean) => {
     setOpen(newOpenState);
   };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant='outline'>
-          <File />
-        </Button>
-      </DialogTrigger>
+      {!parentFolder && (
+        <DialogTrigger asChild>
+          <Button variant='outline'>
+            <File />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Craete File</DialogTitle>
@@ -86,7 +113,7 @@ export default function() {
             Filename must be unique
           </DialogDescription>
         </DialogHeader>
-        <CreateFileForm setOpen={setOpen} />
+        <CreateFileForm setOpen={setOpen} parentFolder={parentFolder} />
       </DialogContent>
     </Dialog>
   )
