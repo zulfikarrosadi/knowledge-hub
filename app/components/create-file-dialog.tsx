@@ -108,7 +108,7 @@ export default function({ parentFolder = '', open, setOpen }: { parentFolder: st
       )}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Craete File</DialogTitle>
+          <DialogTitle>Create File</DialogTitle>
           <DialogDescription>
             Filename must be unique
           </DialogDescription>

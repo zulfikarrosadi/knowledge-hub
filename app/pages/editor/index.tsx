@@ -33,8 +33,9 @@ import {
 } from '@mdxeditor/editor'
 import type { MDXEditorMethods, SandpackConfig } from '@mdxeditor/editor'
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { CopyIcon, Loader2 } from 'lucide-react'
+import { CopyIcon, FileX, Loader2, SaveIcon } from 'lucide-react'
 import { useFilesContext } from '~/lib/context/files-context'
+import { useDebounce } from '~/hooks/use-debounce'
 
 const simpleSandpackConfig: SandpackConfig = {
 	defaultPreset: 'react',
@@ -60,6 +61,12 @@ function CopyMarkddown() {
 	)
 }
 
+async function save(fileHandle: FileSystemFileHandle, content: string) {
+	const file = await fileHandle.createWritable()
+	await file.write(content)
+	await file.close()
+}
+
 function LoadingOverlay() {
 	return (
 		<div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
@@ -68,19 +75,32 @@ function LoadingOverlay() {
 	);
 }
 
+function OpenFileScreen() {
+	return (
+		<div className='flex h-screen justify-center items-center flex-col gap-4'>
+			<FileX size={48} className='text-muted-foreground' />
+			<p className='text-muted-foreground'>Open or create new file</p>
+		</div>
+	)
+}
+
 function App({ params }: { params: Record<'*', string> }) {
 	const ref = useRef<MDXEditorMethods>(null)
-	const [markdown, setMarkdown] = useState<string>('')
+	const [initialMarkdown, setInitialMarkdown] = useState<string>('')
 	const [isLoading, setIsLoading] = useState(false);
+	const [isOpenFile, setIsOpenFile] = useState(false);
+	const [currentFileHandle, setCurrentFileHandle] = useState<FileSystemFileHandle | null>(null)
 	const filesContext = useFilesContext()
 	const filePath = params['*'];
+	const debounceUpdateContent = useDebounce(1000, save)
 
+	// get content file effect
 	useEffect(() => {
 		let isActive = true;
 
 		async function getFileContent(relativePath: string) {
 			if (!relativePath) {
-				setMarkdown('');
+				setInitialMarkdown('');
 				return;
 			}
 
@@ -91,22 +111,23 @@ function App({ params }: { params: Record<'*', string> }) {
 
 			if (!currentFile || currentFile.kind !== 'file') {
 				if (isActive) {
-					setMarkdown(''); // Clear content if file not found or is a directory
+					setInitialMarkdown(''); // Clear content if file not found or is a directory
 					setIsLoading(false);
 				}
 				return;
 			}
+			setCurrentFileHandle(currentFile.handle)
 
 			try {
 				const fileHandle = await currentFile.handle.getFile();
 				const content = await fileHandle.text();
 				if (isActive) {
-					setMarkdown(content);
+					setInitialMarkdown(content);
 				}
 			} catch (error) {
 				console.error("Failed to read file content:", error);
 				if (isActive) {
-					setMarkdown('## Error: Could not load file');
+					setInitialMarkdown('## Error: Could not load file');
 				}
 			} finally {
 				if (isActive) {
@@ -124,19 +145,33 @@ function App({ params }: { params: Record<'*', string> }) {
 
 	useEffect(() => {
 		if (ref.current) {
-			if (ref.current.getMarkdown() !== markdown) {
-				ref.current.setMarkdown(markdown);
+			if (ref.current.getMarkdown() !== initialMarkdown) {
+				ref.current.setMarkdown(initialMarkdown);
 			}
 		}
-	}, [markdown]);
+	}, [initialMarkdown]);
+
+	// toggle show editor 
+	useEffect(() => {
+		if (filePath) {
+			setIsOpenFile(true)
+		} else {
+			setIsOpenFile(false)
+		}
+	}, [filePath])
 
 	return (<>
 		<div className='w-10/12 mx-auto'>
 			{isLoading && <LoadingOverlay />}
+			{!isOpenFile && <OpenFileScreen />}
 			<MDXEditor
 				ref={ref}
 				contentEditableClassName='prose'
-				markdown={markdown}
+				markdown={initialMarkdown}
+				className={!isOpenFile ? 'hidden' : undefined}
+				onChange={(newContent) => {
+					debounceUpdateContent(currentFileHandle, newContent)
+				}}
 				plugins={[
 					headingsPlugin(),
 					listsPlugin(),
