@@ -81,8 +81,8 @@ export function AppSidebar() {
   const hasFetched = useRef(false)
   const [searchTerm, setSearchTerm] = useState("");
   const [isCollapsibleOpen, setIsCollapsibleOpen] = useState(true)
-  const [isCreateFileOpen, setIsCreateFileOpen] = useState(true)
-  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(true)
+  const [isCreateFileOpen, setIsCreateFileOpen] = useState(false)
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false)
 
   useEffect(() => {
     if (!hasFetched.current) {
