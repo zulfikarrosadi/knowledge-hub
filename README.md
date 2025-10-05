@@ -28,7 +28,7 @@ Built with **React + React Router + Go backend**, designed to **sync across devi
 * 📱 PWA with service workers
 
 ### Backend
-
+* [API Repo](https://github.com/zulfikarrosadi/knowledge-hub-api)
 * 🐹 [Go](https://go.dev/) + [Echo](https://echo.labstack.com)
 * 🗄 Postgres for persistent storage
 * 🔑 OTP/QR-based device linking (no traditional auth)
