@@ -4,6 +4,6 @@ export default [
   layout('routes/root-layout.tsx', [
     index("routes/home/index.tsx"),
     route("/editor?/*", "routes/editor/index.tsx"),
-    route("/sharing/", "routes/sharing/index.tsx"),
+    route("/sharing", "routes/sharing/index.tsx"),
   ])
 ] satisfies RouteConfig;

@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   MenuSquare,
+  Share,
 } from "lucide-react"
 
 import {
@@ -24,7 +25,7 @@ import { CollapsibleContent, CollapsibleTrigger } from "@radix-ui/react-collapsi
 import { Input } from "./ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import CreateFileDialog from "./create-file-dialog"
-import { getAllFiles } from "~/lib/opfs"
+import { getAllContent, getAllFiles } from "~/lib/opfs"
 import { useEffect, useMemo, useRef, useState } from "react"
 import CreateFolderDialog from "./create-folder-dialog"
 import { useFilesContext } from "~/lib/context/files-context"
@@ -40,6 +41,11 @@ const items = [
     title: "Editor",
     url: "/editor",
     icon: Edit3,
+  },
+  {
+    title: "Sharing",
+    url: "/sharing",
+    icon: Share,
   },
 ]
 
