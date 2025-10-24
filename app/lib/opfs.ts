@@ -80,6 +80,26 @@ export type FileContent = {
   type: string;
 }
 
+export async function getAllContent(files: FileSystemItem[]): Promise<FileContent[]> {
+  const result: FileContent[] = []
+
+  for (const item of files) {
+    let content: string | null = null
+
+    if (item.kind === 'file') {
+      const file = await item.handle.getFile()
+      content = await file.text()
+      result.push({
+        ...item,
+        content
+      })
+    } else {
+      result.push({ ...item })
+    }
+  }
+
+  return result
+}
 
 /**
  * @param {string} relativePath add this parameter if we create nested folder
