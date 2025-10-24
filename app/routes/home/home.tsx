@@ -3,7 +3,7 @@ import { Link } from "react-router"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 
-export function Welcome() {
+export default function() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
       {/* Hero Section */}
@@ -60,7 +60,7 @@ export function Welcome() {
             <CardTitle className="mt-2">Offline-First</CardTitle>
           </CardHeader>
           <CardContent className="text-slate-600 dark:text-slate-300">
-            Built as a Progressive Web App with IndexedDB. Access your notes anytime, anywhere.
+            Built as a Progressive Web App with OPFS. Access your notes anytime, anywhere.
           </CardContent>
         </Card>
       </div>
@@ -73,4 +73,3 @@ export function Welcome() {
   )
 }
 
-/* Add these in your global.css or tailwind.css */

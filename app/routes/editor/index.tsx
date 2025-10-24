@@ -1,5 +1,5 @@
-import type { Route } from "./+types/editor";
-import App from "pages/editor";
+import type { Route } from "./+types";
+import App from "./editor";
 import {
   SidebarProvider,
   SidebarTrigger

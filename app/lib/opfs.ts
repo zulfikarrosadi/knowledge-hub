@@ -28,6 +28,79 @@ export async function createFile(filename: string, relativePath: string | null =
 }
 
 
+export async function createDownloadedContent(files: FileContent[], username: string) {
+  const root = await navigator.storage.getDirectory()
+  const notesHandle = await root.getDirectoryHandle('notes', { create: true })
+  const syncRoot = await notesHandle.getDirectoryHandle('Sync', { create: true })
+  const userSyncRoot = await syncRoot.getDirectoryHandle(username, { create: true })
+
+  // sort to make sure directory will be created first
+  files.sort((a, b) => a.kind.localeCompare(b.kind))
+
+  for (const file of files) {
+    if (file.kind === 'directory') {
+      await getNestedDirectoryHandle(userSyncRoot, file.relativePath)
+    } else {
+      let parentDir: FileSystemDirectoryHandle | null = null
+      let newFile: FileSystemFileHandle | null = null
+
+      if (file.relativePath !== file.name) {
+        parentDir = await getNestedDirectoryHandle(userSyncRoot, file.relativePath)
+        newFile = await parentDir.getFileHandle(file.name, { create: true })
+      } else {
+        newFile = await userSyncRoot.getFileHandle(file.name, { create: true })
+      }
+
+      if (!file.content) {
+        continue
+      }
+      const writtable = await newFile.createWritable()
+      await writtable.write(file.content)
+      await writtable.close()
+    }
+  }
+}
+
+export type FileContent = {
+  content: string;
+  handle: FileSystemFileHandle;
+  kind: "file";
+  name: string;
+  relativePath: string;
+  lastModified: number;
+  size: number;
+  type: string;
+} | {
+  handle: FileSystemDirectoryHandle;
+  kind: "directory";
+  name: string;
+  relativePath: string;
+  lastModified: number;
+  size: number;
+  type: string;
+}
+
+export async function getAllContent(files: FileSystemItem[]): Promise<FileContent[]> {
+  const result: FileContent[] = []
+
+  for (const item of files) {
+    let content: string | null = null
+
+    if (item.kind === 'file') {
+      const file = await item.handle.getFile()
+      content = await file.text()
+      result.push({
+        ...item,
+        content
+      })
+    } else {
+      result.push({ ...item })
+    }
+  }
+
+  return result
+}
+
 /**
  * @param {string} relativePath add this parameter if we create nested folder
  */
@@ -46,14 +119,22 @@ export async function createFolder(foldername: string, relativePath: string = ''
 }
 
 export type FileSystemItem = {
-  handle: FileSystemHandle;
-  kind: 'file' | 'directory';
+  handle: FileSystemFileHandle;
+  kind: 'file';
   name: string;
   relativePath: string;
   lastModified: number;
   size: number;
   type: string;
-};
+} | {
+  handle: FileSystemDirectoryHandle;
+  kind: 'directory';
+  name: string;
+  relativePath: string;
+  lastModified: number;
+  size: number;
+  type: string;
+}
 
 /**
  * Recursively retrieves all file and directory entries from a given
@@ -118,6 +199,7 @@ export async function getAllFiles() {
   const allFiles = await getDirectoryEntriesRecursive(dirHandle);
   return allFiles;
 }
+
 export async function getContent(filename: string) {
   const opsfRoot = await navigator.storage.getDirectory()
   const notes = await opsfRoot.getDirectoryHandle('notes')

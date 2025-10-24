@@ -24,11 +24,11 @@ Built with **React + React Router + Go backend**, designed to **sync across devi
 * ⚛️ [React](https://reactjs.org/) + [React Router](https://reactrouter.com/)
 * 🖊 [MDXEditor](https://mdxeditor.dev/) for Markdown/MDX notes
 * 🎨 [TailwindCSS](https://tailwindcss.com/) for styling
-* 📦 IndexedDB for offline-first storage
+* 📦 OPFS for offline-first storage
 * 📱 PWA with service workers
 
 ### Backend
-
+* [API Repo](https://github.com/zulfikarrosadi/knowledge-hub-api)
 * 🐹 [Go](https://go.dev/) + [Echo](https://echo.labstack.com)
 * 🗄 Postgres for persistent storage
 * 🔑 OTP/QR-based device linking (no traditional auth)
@@ -41,7 +41,7 @@ Built with **React + React Router + Go backend**, designed to **sync across devi
 1. **Frontend (React)**
 
    * Loads offline from PWA cache
-   * Stores data in IndexedDB
+   * Stores data in OPFS
    * Syncs with backend when available
 
 2. **Backend (Go)**
@@ -94,8 +94,8 @@ By default, backend runs at `http://localhost:8080` and frontend at `http://loca
 
 * [x] Local-first notes with MDX support
 * [ ] Offline PWA support
-* [ ] Device sync with OTP/QR code
-* [ ] Real-time WebSocket sync
+* [x] Device sync with OTP/QR code
+* [x] Real-time WebSocket sync
 * [ ] Bookmarks + code snippets support
 * [ ] Advanced search (tags + full-text index)
 * [ ] Optional AI-powered search/summarization
